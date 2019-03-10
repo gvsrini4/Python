@@ -1,0 +1,64 @@
+from zeep import Client
+import operator
+import time
+import logging
+import traceback
+
+
+#Logging
+logger = logging.getLogger('wsdlDataParse')
+hdlr = logging.FileHandler('wsdlDataParse.log')
+formatter = logging.Formatter('%(asctime)s %(message)s')
+hdlr.setFormatter(formatter)
+logger.addHandler(hdlr)
+logger.setLevel(logging.INFO)
+
+wsdlName = 'test.wsdl'
+operationName = 'Get_Job_Requisitions'
+
+def parseElements(elements):
+    """
+    function takes wsdl operation element sequence
+    as input and returns individual element 
+    """
+    all_elements = {}
+    for name, element in elements:
+        all_elements[name] = {}
+        #all_elements[name]['optional'] = element.is_optional
+        if hasattr(element.type, 'elements'):
+            all_elements[name]['type'] = parseElements(
+                element.type.elements)
+        else:
+            all_elements[name]['type'] = str(element.type)
+
+    return all_elements
+
+def wsdlDataParse(wsdlName,operationName):
+    """
+    Takes input as a wsdl file
+    and returns data based on the oepration name
+    """
+    try:
+        client = Client(wsdlName)
+        interface = {}
+        for service in client.wsdl.services.values():
+            logger.info("Able to read the Service name: %s"%service.name)
+            interface[service.name] = {}
+            for port in service.ports.values():
+                interface[service.name][port.name] = {}
+                #print interface[service.name][port.name]
+                operations = {}
+                #print 'Interface',interface
+                for operation in port.binding._operations.values():
+                    print ("Various Operation Name:",operation.name)
+                    if operation.name==operationName:
+                        elements = operation.input.body.type.elements
+                        #print elements 
+                        print (parseElements(elements))
+                #'''
+    except Exception as e:
+        logger.error(traceback.format_exc())
+        
+if __name__ == '__main__':
+    
+    wsdlDataParse(wsdlName,operationName)
