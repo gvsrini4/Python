@@ -20,11 +20,14 @@ def wsdlParse(wsdlName,typeName):
     try:
         client = Client(wsdlName)  
         logger.info("Able to parse the %s "%wsdlName)
+        elementDict = {}
         for t in client.wsdl.types.types:
             a = t
             b = (a.name,str(a))
             if a.name == typeName:
-                print b
+                #print b
+                elementDict[a.name] = str(a)
+                print (elementDict)
             
     except Exception as e:
         logger.error(e)
